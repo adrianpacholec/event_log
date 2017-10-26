@@ -14,6 +14,7 @@ public class Client {
 	public static void main(String argv[]) throws IOException {
 
 		Client client = new Client();
+		// test
 
 		// User interface
 		Scanner input = new Scanner(System.in);
