@@ -84,7 +84,7 @@ public class JDBC {
 
 	}
 
-	static void createDatabase(String dbName) {
+	static int createDatabase(String dbName) {
 		try {
 			Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
 
@@ -96,22 +96,25 @@ public class JDBC {
 			// End connection
 			statement.close();
 			connection.close();
+			return 200;
 
 		} catch (SQLException wyjatek) {
-			wyjatek.printStackTrace();
+			// wyjatek.printStackTrace();
 			System.out.println("SQLException: " + wyjatek.getMessage());
 			System.out.println("SQLState: " + wyjatek.getSQLState());
 			System.out.println("VendorError: " + wyjatek.getErrorCode());
+			return wyjatek.getErrorCode();
 		}
 
 	}
 
-	static void createTable(String tableName, String[] columns) {
+	static String createTable(String tableName, String[] columns) {
 		try {
 			Connection connection = DriverManager.getConnection(DB_URL + DATABASE, USER, PASS);
 			// Create table
 			Statement statement = connection.createStatement();
 			String sql = "CREATE TABLE " + tableName + " (";
+			sql+= "TIME DATETIME, ";
 			for (String column : columns) {
 				sql += column + ", ";
 			}
@@ -122,27 +125,32 @@ public class JDBC {
 			// End connection
 			statement.close();
 			connection.close();
+			return "Event " + tableName + " successfully added.";
 
 		} catch (SQLException wyjatek) {
-			wyjatek.printStackTrace();
+			// wyjatek.printStackTrace();
 			System.out.println("SQLException: " + wyjatek.getMessage());
 			System.out.println("SQLState: " + wyjatek.getSQLState());
 			System.out.println("VendorError: " + wyjatek.getErrorCode());
+			return wyjatek.getMessage();
 		}
 
 	}
 
-	static void insertInto(String tableName, String[] values) {
+	static String insertInto(String tableName, String[] values) {
 		try {
+			java.util.Date date = new java.util.Date();
+
 			Properties props = new Properties();
-			props.setProperty("user",USER);
-			props.setProperty("password",PASS);
-			props.setProperty("ssl","false");
+			props.setProperty("user", USER);
+			props.setProperty("password", PASS);
+			props.setProperty("ssl", "false");
 			Connection connection = DriverManager.getConnection(DB_URL + DATABASE, props);
 			// Insert into database
 			Statement statement = connection.createStatement();
 
 			String sql = "INSERT INTO " + tableName + " VALUES(";
+			sql += "'" + new java.sql.Timestamp(date.getTime()) + "', ";
 			for (String value : values) {
 				sql += "'" + value + "', ";
 			}
@@ -152,12 +160,14 @@ public class JDBC {
 			// End connection
 			statement.close();
 			connection.close();
+			return "Event of type " + tableName + " saved.";
 
 		} catch (SQLException wyjatek) {
-			wyjatek.printStackTrace();
+			// wyjatek.printStackTrace();
 			System.out.println("SQLException: " + wyjatek.getMessage());
 			System.out.println("SQLState: " + wyjatek.getSQLState());
 			System.out.println("VendorError: " + wyjatek.getErrorCode());
+			return wyjatek.getMessage();
 		}
 	}
 
