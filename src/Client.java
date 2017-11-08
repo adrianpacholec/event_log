@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,34 +12,29 @@ import java.util.Properties;
 import java.util.Scanner;
 
 public class Client {
-
 	static String urlstr;
 	static int ClientID;
 
 	public static void main(String argv[]) throws IOException {
-
 		Client client = new Client();
-
 		client.login();
-
 		// User interface
 		Scanner input = new Scanner(System.in);
 		System.out.println("Client is running. Type help for command list.");
-
 		String decision;
 		do {
 			decision = input.nextLine();
 			try {
 				switch (decision) {
 				case "post":
-					System.out.println("Event type and fields separated with | :");
-					client.sendPost(input.nextLine(), new URL(urlstr + "/" + decision));
+					System.out.println("Event type and fields separated with | (timestamp and id column will be added automatically)):");
+					client.sendPost(ClientID + "|" + input.nextLine(), new URL(urlstr + "/" + decision));
 					break;
 				case "get":
 					client.sendGet(new URL(urlstr + "/" + decision));
 					break;
 				case "add":
-					System.out.println("Add new event type:");
+					System.out.println("Add new event type (timestamp and id column will be added automatically):");
 					System.out.println("<event_name>|<column1_name> <column1_parameters>|<column2_name> ...");
 					client.sendPost(input.nextLine(), new URL(urlstr + "/" + decision));
 					break;
@@ -56,22 +52,19 @@ public class Client {
 				e.getMessage();
 				System.out.println("Unable to connect to server. [" + e.getMessage() + "].");
 			}
-
 		} while (!decision.equals("exit"));
-
 		System.out.println("Bye");
 		input.close();
-
 	}
 
 	private void login() throws IOException {
-
 		Properties config = new Properties();
 		InputStream input = new FileInputStream("config_client.properties");
 		config.load(input);
-		urlstr = "http://" + config.getProperty("ServerIP") + ":" + config.getProperty("Port") + "/login";
+		urlstr = "http://" + config.getProperty("ServerIP") + ":" + config.getProperty("Port");
 		String configID = config.getProperty("ClientID");
-		URL url = new URL(urlstr);
+
+		URL url = new URL(urlstr + "/login");
 		if (configID.equals("")) {
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			InputStream in = connection.getInputStream();
@@ -80,17 +73,19 @@ public class Client {
 		} else
 			ClientID = Integer.parseInt(configID);
 
+		FileOutputStream out = new FileOutputStream("config_client.properties");
+		config.setProperty("ClientID", Integer.toString(ClientID));
+		config.store(out, null);
+		out.close();
+		
 		System.out.println("Logged with ID: " + ClientID);
 	}
 
 	private void sendPost(String message, URL url) throws IOException {
-
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setDoOutput(true); // Triggers POST.
-
 		DataOutputStream writer = new DataOutputStream(connection.getOutputStream());
 		writer.writeBytes(message);
-
 		InputStream in = connection.getInputStream();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 		StringBuilder result = new StringBuilder();
@@ -103,14 +98,12 @@ public class Client {
 
 	private void sendGet(URL url) throws IOException {
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
 		InputStream in = connection.getInputStream();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 		StringBuilder result = new StringBuilder();
 		String line;
 		while ((line = reader.readLine()) != null) {
 			result.append(line + "\n");
-
 		}
 		System.out.println("Avaliable events: ");
 		System.out.println(result);

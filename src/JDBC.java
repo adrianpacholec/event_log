@@ -5,152 +5,73 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class JDBC {
-
 	// JDBC driver name and database URL
 	static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-	static final String DB_URL = "jdbc:mysql://localhost:3306/";
-
+	static String DB_URL;
 	// Database credentials
-	static final String TABLE = "pracownicy";
-	static final String DATABASE = "test";
-	static final String USER = "root";
-	static final String PASS = "test";
+	static String DATABASE;
+	static String USER;
+	static String PASS;
 
-	public static void main(String[] args) {
-
-		// String polaczenieURL =
-		// "jdbc:mysql://localhost:3306/test?user=root&password=test";
-		// Tworzymy proste zapytanie doa bazy danych
-
-		// Connection connection = null;
-		// Statement statement = null;
-
-		// try {
-		// Register JDBC driver
-		try {
-			Class.forName(JDBC_DRIVER);
-
-			getTables();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		// createDatabase(DATABASE);
-		// createTable(TABLE);
-		// insertInto(TABLE);
-
-		// // Uruchamiamy zapytanie do bazy danych
-		// statement = connection.createStatement();
-		//
-		// // PreparedStatement prepStatement =
-		// // connection.prepareStatement("SELECT * FROM pracownicy WHERE
-		// // Imie=? AND Nazwisko=?");
-		// // prepStatement.setString(1, "Henryk");
-		// // prepStatement.setString(2, "Skoczylas");
-		//
-		// // Wyniki, iterator
-		// String query = "Select * FROM " + TABLE;
-		// ResultSet resultset = statement.executeQuery(query);
-		//
-		// displayData(resultset);
-		// statement.execute("SHUTDOWN");
-		// statement.close();
-		// connection.close();
-		// } catch (ClassNotFoundException wyjatek) {
-		// wyjatek.printStackTrace();
-		// System.out.println("Problem ze sterownikiem");
-		// }
-		//
-		// catch (SQLException wyjatek) {
-		// wyjatek.printStackTrace();
-		// System.out.println(
-		// "Problem z logowaniem\nProsze sprawdzic:\n nazwę użytkownika, hasło,
-		// nazwę bazy danych lub adres IP serwera");
-		// System.out.println("SQLException: " + wyjatek.getMessage());
-		// System.out.println("SQLState: " + wyjatek.getSQLState());
-		// System.out.println("VendorError: " + wyjatek.getErrorCode());
-		// }
-
-		// finally {
-		// try {
-		// if (connection != null)
-		// connection.close();
-		// } catch (SQLException se) {
-		// se.printStackTrace();
-		// }
-
-		// }
-
+	public JDBC(String adress, String port, String database, String user, String pass) {
+		DB_URL = "jdbc:mysql://" + adress + ":" + port + "/";
+		DATABASE = database;
+		USER = user;
+		PASS = pass;
 	}
 
-	static int createDatabase(String dbName) {
+	public int createDatabase(String dbName) {
 		try {
 			Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
-
 			// Create database
 			Statement statement = connection.createStatement();
 			String sql = "CREATE DATABASE " + dbName;
 			statement.executeUpdate(sql);
-
 			// End connection
 			statement.close();
 			connection.close();
 			return 200;
-
 		} catch (SQLException wyjatek) {
-			// wyjatek.printStackTrace();
-			System.out.println("SQLException: " + wyjatek.getMessage());
-			System.out.println("SQLState: " + wyjatek.getSQLState());
-			System.out.println("VendorError: " + wyjatek.getErrorCode());
 			return wyjatek.getErrorCode();
 		}
-
 	}
 
-	static String createTable(String tableName, String[] columns) {
+	public String createTable(String tableName, String[] columns) {
 		try {
-			Connection connection = DriverManager.getConnection(DB_URL + DATABASE, USER, PASS);
+			Connection connection = DriverManager.getConnection(DB_URL + DATABASE + "?useSSL=false", USER, PASS);
 			// Create table
 			Statement statement = connection.createStatement();
 			String sql = "CREATE TABLE " + tableName + " (";
-			sql+= "TIME DATETIME, ";
+			sql += "TIME DATETIME, ";
+			sql += "ID INT, ";
 			for (String column : columns) {
 				sql += column + ", ";
 			}
 			sql = sql.substring(0, sql.length() - 2);
 			sql += ")";
-
 			statement.executeUpdate(sql);
 			// End connection
 			statement.close();
 			connection.close();
 			return "Event " + tableName + " successfully added.";
-
 		} catch (SQLException wyjatek) {
-			// wyjatek.printStackTrace();
-			System.out.println("SQLException: " + wyjatek.getMessage());
-			System.out.println("SQLState: " + wyjatek.getSQLState());
-			System.out.println("VendorError: " + wyjatek.getErrorCode());
 			return wyjatek.getMessage();
 		}
-
 	}
 
-	static String insertInto(String tableName, String[] values) {
+	public String insertInto(String tableName, String clientID, String[] values) {
 		try {
 			java.util.Date date = new java.util.Date();
-
 			Properties props = new Properties();
 			props.setProperty("user", USER);
 			props.setProperty("password", PASS);
 			props.setProperty("ssl", "false");
-			Connection connection = DriverManager.getConnection(DB_URL + DATABASE, props);
+			Connection connection = DriverManager.getConnection(DB_URL + DATABASE + "?useSSL=false", props);
 			// Insert into database
 			Statement statement = connection.createStatement();
-
 			String sql = "INSERT INTO " + tableName + " VALUES(";
 			sql += "'" + new java.sql.Timestamp(date.getTime()) + "', ";
+			sql += "'" + clientID + "', ";
 			for (String value : values) {
 				sql += "'" + value + "', ";
 			}
@@ -161,28 +82,23 @@ public class JDBC {
 			statement.close();
 			connection.close();
 			return "Event of type " + tableName + " saved.";
-
 		} catch (SQLException wyjatek) {
-			// wyjatek.printStackTrace();
-			System.out.println("SQLException: " + wyjatek.getMessage());
-			System.out.println("SQLState: " + wyjatek.getSQLState());
-			System.out.println("VendorError: " + wyjatek.getErrorCode());
 			return wyjatek.getMessage();
 		}
 	}
 
-	static String getTables() {
+	public String getTables() {
 		StringBuilder events = new StringBuilder();
 		try {
-			Connection connection = DriverManager.getConnection(DB_URL + DATABASE, USER, PASS);
+			Connection connection = DriverManager.getConnection(DB_URL + DATABASE + "?useSSL=false", USER, PASS);
 			DatabaseMetaData md = connection.getMetaData();
-
 			ResultSet rs = md.getTables(null, null, "%", null);
-
 			while (rs.next()) {
 				String tableName = rs.getString(3); // gets table name
 				events.append(tableName + ": ");
 				ResultSet columns = md.getColumns(null, null, tableName, null);
+				columns.next();
+				columns.next();
 				while (columns.next()) {
 					events.append(columns.getString(4) + " (" + columns.getString(6) + ")");
 					if (!columns.isLast())
@@ -190,28 +106,53 @@ public class JDBC {
 				}
 				events.append("\n");
 			}
-
 		} catch (SQLException e) {
-			e.printStackTrace();
+			return e.getMessage();
 		}
 		return events.toString();
 	}
 
-	static void displayData(ResultSet rs) {
+	public void deleteData(String table, String where) {
 		try {
-			// daneZBazy = rs.getString(1);
-			// System.out.println("\n" + daneZBazy + " ");
-			// daneZBazy = rs.getString(2);
-			// System.out.println(daneZBazy + " ");
-			// daneZBazy = rs.getString(3);
-			// System.out.println(daneZBazy);
+			Connection connection = DriverManager.getConnection(DB_URL + DATABASE + "?useSSL=false", USER, PASS);
+			Statement statement = connection.createStatement();
+			String query = "DELETE FROM " + table;
+			if (!where.isEmpty())
+				query += " WHERE " + where;
+			statement.executeUpdate(query);
+			System.out.println("Deleted successfully.");
 
-			while (rs.next()) {
-				System.out.print(rs.getString(1) + " | " + rs.getString(2) + " | " + rs.getString(3) + "\n");
-			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.out.println(e.getMessage());
 		}
 	}
 
+	public void displayData(String table, String where, String sort, String order) {
+		try {
+			Connection connection = DriverManager.getConnection(DB_URL + DATABASE + "?useSSL=false", USER, PASS);
+			Statement statement = connection.createStatement();
+
+			System.out.println("\nDisplaying info from " + table + "\n-------------------------");
+			String query = "SELECT * FROM " + table;
+			if (!where.isEmpty())
+				query += " WHERE " + where;
+			if (!sort.isEmpty())
+				query += " ORDER BY " + sort + " " + order;
+
+			ResultSet rs = statement.executeQuery(query);
+			ResultSetMetaData md = rs.getMetaData();
+
+			int colCount = md.getColumnCount();
+			for (int i = 1; i <= colCount; i++)
+				System.out.print(md.getColumnName(i) + " | ");
+			System.out.print("\n");
+			while (rs.next()) {
+				for (int i = 1; i <= colCount; i++)
+					System.out.print(rs.getString(i) + " | ");
+				System.out.print("\n");
+			}
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+	}
 }
